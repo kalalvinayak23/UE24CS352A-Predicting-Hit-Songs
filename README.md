@@ -20,14 +20,11 @@ song_002,data/audio/song_002.wav,0
 
 ## Project Structure
 ```text
-Predicting_Hit_Songs_Submission/
+UE24CS352A-Predicting-Hit-Songs/
 ├── src/
 │   ├── extract_features.py
 │   ├── train_models.py
 │   └── predict.py
-├── docs/
-│   ├── Mini_Project_Writeup_Predicting_Hit_Songs.pdf
-│   └── Presentation_Predicting_Hit_Songs.pptx
 ├── requirements.txt
 ├── .gitignore
 └── README.md
@@ -85,3 +82,5 @@ The models are evaluated using:
 
 ## Note
 Audio files and generated outputs are not stored in the repository. Keep the project audio files locally under `data/audio/`, create `data/audio_metadata.csv` using the format shown above, and then run the commands in order.
+
+The mini-project write-up PDF and presentation are maintained separately as submission/review deliverables.
