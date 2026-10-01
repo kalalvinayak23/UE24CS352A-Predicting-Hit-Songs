@@ -2,6 +2,15 @@
 __pycache__/
 *.pyc
 .DS_Store
+
+# Generated outputs
 results/
-data/features.csv
+results_real/
+
+# Local datasets and extracted features
 data/audio/
+data/real_audio/
+data/features.csv
+data/real_features.csv
+data/real_billboard.csv
+data/audio_metadata.csv
