@@ -1,24 +1,71 @@
-# Predicting Hit Songs Using Repeated Chorus
+# Predicting Hit Songs Using Machine Learning
 
 ## Problem Statement
-This mini-project predicts whether a song is popular or not using audio features extracted from a 15-second repeated chorus or hook. The project focuses only on audio information and does not use artist, album, social-media, or release-date metadata.
+This mini-project predicts whether a song belongs to the hit or non-hit class using audio-related features and supervised machine learning.
 
-## Dataset
-The project follows a supervised binary-classification setup:
-- `1` - popular / hit song
-- `0` - unpopular / non-hit song
+The output is binary:
 
-For each song, `pychorus` is used to locate a repeated chorus and `librosa` is used to extract MFCC, chroma, RMS energy, spectral features, tonal centroid, and zero-crossing rate. Seven summary statistics are calculated for the time-varying features, giving 518 audio features per song.
+- `1` = hit song
+- `0` = non-hit song
 
-The input metadata CSV must contain:
+## Final Project Explanation
+The project has two parts:
 
-```csv
-track_id,audio_path,label
-song_001,data/audio/song_001.wav,1
-song_002,data/audio/song_002.wav,0
+### Part 1: Raw-audio pipeline
+This part verifies that the program can process local WAV audio files.
+
+Pipeline:
+
+```text
+Audio file -> repeated 15-second chorus -> Librosa features -> summary statistics -> 518 numeric features
+```
+
+The raw-audio pipeline uses:
+
+- `pychorus` for repeated chorus detection
+- `librosa` for audio feature extraction
+- fallback to the middle 15 seconds if a chorus cannot be detected
+
+### Part 2: Real-data machine-learning experiment
+For the final ML result, a real labelled music dataset was used locally.
+
+Dataset summary:
+
+- Total songs: `6,398`
+- Hit songs: `3,199`
+- Non-hit songs: `3,199`
+- Dataset is balanced
+- The real dataset contains precomputed music/audio features
+
+Important: the final `84.69%` test accuracy comes from the real-data experiment, not from the artificial WAV test files.
+
+## Final Result
+The following models were compared:
+
+- Logistic Regression
+- Linear Discriminant Analysis
+- Linear SVM
+- RBF SVM
+- Polynomial SVM
+- Random Forest
+- Gradient Boosting
+- Neural Network / MLP
+
+The final model was selected using cross-validation F1-score.
+
+Best model:
+
+```text
+Random Forest
+Cross-validation F1: 84.66%
+Test accuracy:       84.69%
+Test F1-score:       85.25%
+Test precision:      82.23%
+Test recall:         88.50%
 ```
 
 ## Project Structure
+
 ```text
 UE24CS352A-Predicting-Hit-Songs/
 ├── src/
@@ -30,57 +77,62 @@ UE24CS352A-Predicting-Hit-Songs/
 └── README.md
 ```
 
+The dataset files and generated result files are intentionally not stored in the GitHub repository.
+
 ## Setup
+
 ```bash
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-On Windows, activate the virtual environment with:
+On Windows:
 
 ```bash
 .venv\Scripts\activate
 ```
 
-## Run
-### 1. Extract repeated-chorus audio features
+## Raw-Audio Feature Extraction Command
+Use this when you have local WAV audio files and a CSV with `track_id,audio_path,label`.
+
 ```bash
 python src/extract_features.py --input data/audio_metadata.csv --output data/features.csv
 ```
 
-If a repeated chorus cannot be detected for a particular song, the script prints a warning and uses the middle 15 seconds as a fallback.
+## Train Models
+For raw-audio extracted features:
 
-### 2. Train and compare models
 ```bash
 python src/train_models.py --features data/features.csv --out results
 ```
 
-The models are compared using 5-fold cross-validation. The saved `best_model.joblib` is selected using cross-validated F1-score, while the held-out test set is kept for final evaluation.
+For the local real-data experiment used in the final demo:
 
-### 3. Predict using the saved model
 ```bash
-python src/predict.py --model results/best_model.joblib --features data/features.csv --output results/predictions.csv
+python src/train_models.py --features data/real_features.csv --out results_real
 ```
 
-## Models Compared
-- Logistic Regression
-- Linear Discriminant Analysis
-- Linear SVM
-- RBF SVM
-- Polynomial SVM
-- Random Forest
-- Gradient Boosting
-- Neural Network / MLP
+## Predict
+For the final real-data demo:
+
+```bash
+python src/predict.py --model results_real/best_model.joblib --features data/real_features.csv --output results_real/predictions.csv
+```
+
+Show predictions:
+
+```bash
+head results_real/predictions.csv
+```
 
 ## Evaluation Metrics
-The models are evaluated using:
+The project uses:
+
 - Accuracy
 - Precision
 - Recall
 - F1-score
 
-## Note
-Audio files and generated outputs are not stored in the repository. Keep the project audio files locally under `data/audio/`, create `data/audio_metadata.csv` using the format shown above, and then run the commands in order.
-
-The mini-project write-up PDF and presentation are maintained separately as submission/review deliverables.
+## Demo Note
+During the live demo, use the saved model in `results_real/best_model.joblib` for fast prediction. Retrain the models only if the evaluator specifically asks to see training.
