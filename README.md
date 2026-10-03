@@ -39,6 +39,62 @@ Dataset summary:
 
 Important: the final `84.69%` test accuracy comes from the real-data experiment, not from the artificial WAV test files.
 
+## Real Dataset and Reproducing the Demo
+
+Dataset source:
+
+- [The Spotify Hit Predictor Dataset](https://github.com/fortyTwo102/The-Spotify-Hit-Predictor-Dataset)
+- File used: `dataset-of-10s.csv`
+
+The source dataset contains Spotify audio features and a binary `target` column. In the source documentation, `target = 1` means the song appeared in a Billboard Hot 100 weekly list for that decade at least once; `target = 0` is the source author's non-hit class.
+
+The dataset itself is not stored in this repository. To reproduce the real-data demo:
+
+1. Download `dataset-of-10s.csv` from the source repository.
+2. Place it inside the local `data/` folder and rename it to:
+
+```text
+data/real_billboard.csv
+```
+
+3. Prepare the file for this project:
+
+```bash
+python - <<'PY'
+import pandas as pd
+
+df = pd.read_csv("data/real_billboard.csv")
+df = df.rename(columns={
+    "target": "label",
+    "track": "track_id"
+})
+df.to_csv("data/real_features.csv", index=False)
+
+print("Songs:", len(df))
+print(df["label"].value_counts())
+PY
+```
+
+For the downloaded `dataset-of-10s.csv`, this gives 6,398 songs: 3,199 hits and 3,199 non-hits.
+
+4. Train the models:
+
+```bash
+python src/train_models.py --features data/real_features.csv --out results_real
+```
+
+5. Run prediction using the saved best model:
+
+```bash
+python src/predict.py --model results_real/best_model.joblib --features data/real_features.csv --output results_real/predictions.csv
+```
+
+6. Show a few predictions:
+
+```bash
+head results_real/predictions.csv
+```
+
 ## Final Result
 The following models were compared:
 
