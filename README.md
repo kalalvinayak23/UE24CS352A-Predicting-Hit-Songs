@@ -8,7 +8,7 @@ The output is binary:
 - `1` = hit song
 - `0` = non-hit song
 
-## Final Project Explanation
+## Project Explanation
 The project has two parts:
 
 ### Part 1: Raw-audio pipeline
