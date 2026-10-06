@@ -8,56 +8,56 @@ The output is binary:
 - `1` = hit song
 - `0` = non-hit song
 
-## Project Explanation
-The project has two parts:
+## Project Overview
+The project contains two workflows.
 
-### Part 1: Raw-audio pipeline
-This part verifies that the program can process local WAV audio files.
-
-Pipeline:
+### 1. Raw-Audio Feature Extraction
+This workflow processes local WAV audio files.
 
 ```text
-Audio file -> repeated 15-second chorus -> Librosa features -> summary statistics -> 518 numeric features
+Audio file -> repeated 15-second chorus -> Librosa features -> summary statistics -> 518 numerical features
 ```
 
-The raw-audio pipeline uses:
+It uses:
 
-- `pychorus` for repeated chorus detection
-- `librosa` for audio feature extraction
-- fallback to the middle 15 seconds if a chorus cannot be detected
+- `pychorus` to identify a repeated chorus
+- `librosa` to extract audio features
+- the middle 15 seconds as a fallback if a repeated chorus cannot be detected
 
-### Part 2: Real-data machine-learning experiment
-For the final ML result, a real labelled music dataset was used locally.
+### 2. Real-Data Machine-Learning Evaluation
+The main machine-learning evaluation uses a real labelled music dataset.
 
 Dataset summary:
 
 - Total songs: `6,398`
 - Hit songs: `3,199`
 - Non-hit songs: `3,199`
-- Dataset is balanced
-- The real dataset contains precomputed music/audio features
+- The dataset is balanced
+- The dataset contains precomputed music/audio features
 
-Important: the final `84.69%` test accuracy comes from the real-data experiment, not from the artificial WAV test files.
+The reported `84.69%` test accuracy comes from this 6,398-song real-data evaluation. The raw-audio feature-extraction workflow is separate.
 
-## Real Dataset and Reproducing the Demo
+## Dataset and Reproduction Steps
 
 Dataset source:
 
 - [The Spotify Hit Predictor Dataset](https://github.com/fortyTwo102/The-Spotify-Hit-Predictor-Dataset)
 - File used: `dataset-of-10s.csv`
 
-The source dataset contains Spotify audio features and a binary `target` column. In the source documentation, `target = 1` means the song appeared in a Billboard Hot 100 weekly list for that decade at least once; `target = 0` is the source author's non-hit class.
+The source dataset contains Spotify audio features and a binary `target` column. In the source documentation, `target = 1` means the song appeared in a Billboard Hot 100 weekly list for that decade at least once, while `target = 0` represents the source author's non-hit class.
 
-The dataset itself is not stored in this repository. To reproduce the real-data demo:
+The dataset files are kept locally and are not stored in this repository.
 
-1. Download `dataset-of-10s.csv` from the source repository.
+### Prepare the dataset
+
+1. Download `dataset-of-10s.csv` from the dataset source.
 2. Place it inside the local `data/` folder and rename it to:
 
 ```text
 data/real_billboard.csv
 ```
 
-3. Prepare the file for this project:
+3. Prepare the feature file:
 
 ```bash
 python - <<'PY'
@@ -75,28 +75,11 @@ print(df["label"].value_counts())
 PY
 ```
 
-For the downloaded `dataset-of-10s.csv`, this gives 6,398 songs: 3,199 hits and 3,199 non-hits.
+For `dataset-of-10s.csv`, this produces 6,398 songs: 3,199 hits and 3,199 non-hits.
 
-4. Train the models:
+## Model Training
 
-```bash
-python src/train_models.py --features data/real_features.csv --out results_real
-```
-
-5. Run prediction using the saved best model:
-
-```bash
-python src/predict.py --model results_real/best_model.joblib --features data/real_features.csv --output results_real/predictions.csv
-```
-
-6. Show a few predictions:
-
-```bash
-head results_real/predictions.csv
-```
-
-## Final Result
-The following models were compared:
+The following models are compared:
 
 - Logistic Regression
 - Linear Discriminant Analysis
@@ -107,7 +90,15 @@ The following models were compared:
 - Gradient Boosting
 - Neural Network / MLP
 
-The final model was selected using cross-validation F1-score.
+The dataset is split into 75% training data and 25% test data. Five-fold stratified cross-validation is used on the training data. The final model is selected using cross-validation F1-score.
+
+Train the models with:
+
+```bash
+python src/train_models.py --features data/real_features.csv --out results_real
+```
+
+## Final Result
 
 Best model:
 
@@ -119,6 +110,57 @@ Test F1-score:       85.25%
 Test precision:      82.23%
 Test recall:         88.50%
 ```
+
+## Prediction
+
+Run prediction using the saved best model:
+
+```bash
+python src/predict.py --model results_real/best_model.joblib --features data/real_features.csv --output results_real/predictions.csv
+```
+
+Show the generated predictions:
+
+```bash
+head results_real/predictions.csv
+```
+
+The predicted labels use:
+
+- `1` = hit
+- `0` = non-hit
+
+## Raw-Audio Feature Extraction
+
+For local WAV files, prepare a CSV containing:
+
+```text
+track_id,audio_path,label
+```
+
+Run:
+
+```bash
+python src/extract_features.py --input data/audio_metadata.csv --output data/features.csv
+```
+
+The generated file contains `track_id`, `label`, and 518 numerical audio features for each processed song.
+
+The extracted audio feature groups include:
+
+- Chroma STFT
+- Chroma CQT
+- Chroma CENS
+- MFCC
+- RMS
+- Spectral centroid
+- Spectral bandwidth
+- Spectral contrast
+- Spectral rolloff
+- Tonnetz
+- Zero-crossing rate
+
+Each feature dimension is summarized using minimum, mean, median, maximum, standard deviation, skewness, and kurtosis.
 
 ## Project Structure
 
@@ -133,14 +175,15 @@ UE24CS352A-Predicting-Hit-Songs/
 └── README.md
 ```
 
-The dataset files and generated result files are intentionally not stored in the GitHub repository.
+Dataset files, audio files, trained models, and generated result files are kept locally and are excluded from the repository.
 
 ## Setup
+
+Create and activate a virtual environment:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
 ```
 
 On Windows:
@@ -149,46 +192,17 @@ On Windows:
 .venv\Scripts\activate
 ```
 
-## Raw-Audio Feature Extraction Command
-Use this when you have local WAV audio files and a CSV with `track_id,audio_path,label`.
+Install the required packages:
 
 ```bash
-python src/extract_features.py --input data/audio_metadata.csv --output data/features.csv
-```
-
-## Train Models
-For raw-audio extracted features:
-
-```bash
-python src/train_models.py --features data/features.csv --out results
-```
-
-For the local real-data experiment used in the final demo:
-
-```bash
-python src/train_models.py --features data/real_features.csv --out results_real
-```
-
-## Predict
-For the final real-data demo:
-
-```bash
-python src/predict.py --model results_real/best_model.joblib --features data/real_features.csv --output results_real/predictions.csv
-```
-
-Show predictions:
-
-```bash
-head results_real/predictions.csv
+pip install -r requirements.txt
 ```
 
 ## Evaluation Metrics
-The project uses:
+
+The project evaluates models using:
 
 - Accuracy
 - Precision
 - Recall
 - F1-score
-
-## Demo Note
-During the live demo, use the saved model in `results_real/best_model.joblib` for fast prediction. Retrain the models only if the evaluator specifically asks to see training.
